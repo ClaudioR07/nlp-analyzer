@@ -51,5 +51,5 @@ def preprocesar_dataframe(df, columna_texto, nlp):
     # Aplicamos la función fila por fila y guardamos el resultado en una nueva columna
     df_resultado['texto_limpio'] = df_resultado[columna_texto].apply(lambda x: limpiar_comentario(x, nlp))
     
-    print("limpieza y lematización lista")
+    print("limpieza y lematización lista!")
     return df_resultado
