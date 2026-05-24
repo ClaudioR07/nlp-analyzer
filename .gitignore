@@ -223,3 +223,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# --- Reglas específicas del proyecto de Turismo ---
+
+# 1. Ignorar los datasets para no exceder el límite de peso de GitHub
+# (No queremos subir los CSV pesados de Riviera Nayarit o similares, solo el código)
+data/*.csv
+data/*.xlsx
+
+# 2. Ignorar los modelos locales pesados
+# (Los pesos de spaCy o BERTopic que descarguen para el modo offline)
+models/*
+!models/.gitkeep 
+
+# 3. Ignorar los reportes generados por el orquestador
+# (Para que tus gráficas interactivas de prueba no ensucien el repositorio)
+*.html
+
+# archivo de pruebas
+test.py
