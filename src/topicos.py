@@ -33,7 +33,7 @@ class AnalizadorSemantico:
 
     def procesar_particion(self, df_particion, col_limpia='texto_limpio', col_original='comentario'):
         """
-        Punto 4: Recibe una partición (ej. solo positivos o solo negativos).
+        Recibe una partición (ej. solo positivos o solo negativos).
         Evalúa el umbral y decide si aplica BERTopic o Frecuencia de palabras.
         """
         textos_limpios = df_particion[col_limpia].tolist()
@@ -106,7 +106,7 @@ class AnalizadorSemantico:
             comentario_repr = repr_docs[0] if repr_docs else "No se encontró comentario representativo."
             
             # Intentar mapear el comentario limpio al original
-            # (En un caso real estricto se mapea por índice, aquí hacemos una aproximación segura)
+            # (aproximación segura)
             comentario_original_repr = comentario_repr
             if comentario_repr in textos_limpios:
                 idx = textos_limpios.index(comentario_repr)
@@ -128,7 +128,7 @@ class AnalizadorSemantico:
 
     def analizar_precio_valor(self, df, col_limpia='texto_limpio', col_original='comentario'):
         """
-        Punto 7: Análisis del concepto 'Precio, valor, costo' usando similitud de coseno.
+        Análisis del concepto 'Precio, valor, costo' usando similitud de coseno.
         """
         print("Realizando análisis semántico de 'Precio / Valor / Costo'...")
         textos_limpios = df[col_limpia].tolist()
