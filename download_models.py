@@ -6,15 +6,24 @@ import subprocess
 print("=== INICIANDO DESCARGA DE MODELOS PARA EJECUCIÓN OFFLINE ===")
 
 # spaCy
-modelos_spacy = ['es_core_news_sm', 'en_core_web_sm', 'fr_core_news_sm']
-for modelo in modelos_spacy:
-    print(f"\nDescargando modelo de spaCy: {modelo}...")
-    try:
-        subprocess.check_call([sys.executable, "-m", "spacy", "download", modelo])
-        print(f"-> {modelo} descargado con éxito.")
-    except Exception as e:
-        print(f"Error al descargar {modelo}: {e}")
+urls_spacy = [
+    "https://github.com/explosion/spacy-models/releases/download/es_core_news_sm-3.7.0/es_core_news_sm-3.7.0.tar.gz",
+    "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0.tar.gz",
+    "https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0.tar.gz"
+]
 
+print("\nDescargando e instalando modelos de spaCy de forma directa...")
+for url in urls_spacy:
+    # Extraer el nombre del modelo de la URL para imprimirlo bonito
+    nombre_modelo = url.split("/")[-1].split("-3.7.0")[0]
+    print(f"\nProcesando: {nombre_modelo}...")
+    try:
+        # Aquí forzamos pip install directo desde la URL
+        subprocess.check_call([sys.executable, "-m", "pip", "install", url])
+        print(f"-> {nombre_modelo} instalado con éxito.")
+    except Exception as e:
+        print(f"[X] Error al instalar {nombre_modelo}: {e}")
+        
 # Sentimientos y Tópicos
 print("\nDescargando modelos de Deep Learning para Sentimientos y Tópicos...")
 try:
