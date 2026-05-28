@@ -3,6 +3,13 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Archivos terminaciones en csv y xlsx
+*.csv
+*.xlsx
+
+# contenido de la carpeta data
+data/*
+
 # C extensions
 *.so
 
