@@ -1,19 +1,14 @@
+# main.py (fragmento de prueba)
+from src.visualizaciones import generar_graficas
 import pandas as pd
 
-from src.preprocesamiento import detectar_outliers
-from src.sentimientos import analizar_sentimiento
+# Datos simulados para probar tu nueva funcionalidad
+df_test = pd.DataFrame({
+    'Tópico': ['Servicio', 'Infraestructura', 'Naturaleza', 'Servicio', 'Naturaleza'],
+    'Polaridad_Sentimiento': [0.8, -0.2, 0.9, 0.4, -0.7],
+    'Similitud_Precio': [0.1, 0.9, 0.05, 0.3, 0.15],
+    'Comentario_Original': ['Excelente trato', 'Hotel viejo', 'Agua cristalina', 'Meseros amables', 'Sargazo en la orilla']
+})
 
-df = pd.read_csv("data/playas_prueba.csv")
-
-comentarios = df["comentarios"].tolist()
-
-print("\nCOMENTARIOS:")
-print(comentarios)
-
-print("\nOUTLIERS:")
-print(detectar_outliers(comentarios))
-
-print("\nSENTIMIENTOS:")
-
-for comentario in comentarios:
-    print(comentario, "->", analizar_sentimiento(comentario))
+# Ejecución con Modo Oscuro y Paleta Cividis
+generar_graficas(df_test, paleta="Viridis", titulo="Prueba de Accesibilidad", modo_oscuro=False)
