@@ -1,45 +1,29 @@
-positivas = [
-    "hermosa",
-    "excelente",
-    "bonita",
-    "limpia",
-    "agradable",
-    "buena",
-    "increible"
-]
+from pysentimiento import create_analyzer
+from textblob import TextBlob
+from textblob_fr import PatternTagger, PatternAnalyzer
 
-negativas = [
-    "mala",
-    "horrible",
-    "sucia",
-    "terrible",
-    "feo",
-    "pésimo"
-]
+class AnalizadorSentimientosPipeline:
+    def __init__(self, idioma):
+        self.idioma = idioma
+        if idioma in ['es', 'en']:
+            self.analyzer = create_analyzer(task="sentiment", lang=idioma)
 
-
-def analizar_sentimiento(texto):
-
-    texto = texto.lower()
-
-    positivos = 0
-    negativos = 0
-
-    for palabra in positivas:
-
-        if palabra in texto:
-            positivos += 1
-
-    for palabra in negativas:
-
-        if palabra in texto:
-            negativos += 1
-
-    if positivos > negativos:
-        return "POS"
-
-    elif negativos > positivos:
-        return "NEG"
-
-    else:
+    def analizar(self, texto):
+        if not isinstance(texto, str) or texto.strip() == "":
+            return "NEU"
+            
+        if self.idioma in ['es', 'en']:
+            try:
+                res = self.analyzer.predict(texto)
+                return res.output # devuelve 'POS', 'NEU', 'NEG'
+            except Exception:
+                return "NEU"
+                
+        elif self.idioma == 'fr':
+            # polaridad de -1 a 1
+            blob = TextBlob(texto, pos_tagger=PatternTagger(), analyzer=PatternAnalyzer())
+            polaridad = blob.sentiment[0]
+            if polaridad > 0.05: return "POS"
+            elif polaridad < -0.05: return "NEG"
+            else: return "NEU"
         return "NEU"

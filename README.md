@@ -13,4 +13,4 @@ Para ejecutar el orquestador, utiliza el siguiente formato:
 * **Integrante 1:** CLI y Preprocesamiento Léxico.
 * **Integrante 2:** Outliers y Sentimientos (pysentimiento).
 * **Integrante 3:** Tópicos (BERTopic) y Similitud "Precio".
-* **Integrante 4 (Claudio):** Integración, Orquestación y Visualización Interactiva Plotly.
+* **Integrante 4:** Integración, Orquestación y Visualización Interactiva Plotly.
