@@ -48,12 +48,21 @@ def obtener_argumentos():
 
     args = parser.parse_args()
 
-    # verificación si el archivo CSV existe
+    parser.add_argument(
+        '-e', '--encoding',
+        type=str,
+        default='utf-8',
+        choices=['utf-8', 'latin-1', 'ISO-8859-1', 'cp1252'],
+        help="Codificación del archivo CSV (por defecto: utf-8). Intente 'latin-1' si tiene problemas con acentos.")
+
+    args = parser.parse_args()
+
     if not os.path.exists(args.input):
         parser.error(f"El archivo especificado en --input no existe: '{args.input}'")
 
+
     try:
-        with open(args.input, mode='r', encoding='utf-8') as f:
+        with open(args.input, mode='r', encoding=args.encoding) as f:
             lector_csv = csv.reader(f)
             columnas_existentes = next(lector_csv)
             
@@ -61,8 +70,13 @@ def obtener_argumentos():
                 columnas_disponibles = ", ".join([f"'{col}'" for col in columnas_existentes])
                 parser.error(
                     f"La columna '{args.columna}' no se encuentra en el archivo CSV.\n"
-                    f"Columnas detectadas en el archivo: [{columnas_disponibles}]"
+                    f"Columnas detectadas: [{columnas_disponibles}]"
                 )
+    except UnicodeDecodeError:
+        parser.error(
+            f"Error de codificación: no se pudo leer el archivo usando '{args.encoding}'.\n"
+            f"Intente ejecutar de nuevo cambiando el parámetro"
+        )
     except Exception as e:
         parser.error(f"No se pudo leer el archivo CSV para validar las columnas. Error: {e}")
 

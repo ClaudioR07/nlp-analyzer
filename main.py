@@ -12,7 +12,7 @@ def main():
     
     print(f"\n[1/5] Leyendo el archivo de datos: {args.input}...")
     try:
-        df = pd.read_csv(args.input)
+        df = pd.read_csv(args.input, encoding=args.encoding)
     except Exception as e:
         print(f"Error crítico al abrir el archivo CSV: {e}")
         return
