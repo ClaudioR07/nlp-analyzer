@@ -8,10 +8,6 @@ import nltk
 
 nltk.download('punkt_tab', quiet=True)
 
-# ─────────────────────────────────────────────
-# INTEGRANTE 1: Limpieza y preprocesamiento
-# ─────────────────────────────────────────────
-
 def cargar_modelo_spacy(idioma):
     modelos = {
         'es': 'es_core_news_sm',
@@ -45,21 +41,9 @@ def preprocesar_dataframe(df, columna_texto, nlp):
     print("  Limpieza y lematización completadas.")
     return df_resultado
 
-# ─────────────────────────────────────────────
-# INTEGRANTE 2: Detección de outliers y n-gramas
-# ─────────────────────────────────────────────
-
 def detectar_outliers(textos_limpios: list, contaminacion: float = 0.05):
     """
     Detecta comentarios atípicos usando Isolation Forest sobre TF-IDF.
-    
-    Parámetros:
-        textos_limpios  : lista de strings ya preprocesados
-        contaminacion   : proporción esperada de outliers (default 5%)
-    
-    Retorna:
-        indices_outliers : lista de índices de comentarios atípicos
-        indices_normales : lista de índices de comentarios normales
     """
     print(f"  Detectando outliers (contaminación={contaminacion})...")
 
