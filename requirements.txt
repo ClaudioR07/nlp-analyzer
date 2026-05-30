@@ -1,2 +1,21 @@
+# --- Procesamiento base de datos y texto ---
+scikit-learn==1.3.2
+spacy==3.7.2
+
+# --- análisis de sentimientos (Híbrido) ---
+pysentimiento==0.7.1
+textblob==0.17.1
+textblob-fr==0.2.0
+accelerate>=0.26.0
+
+# --- modelado de tópicos e inteligencia semántica ---
+bertopic==0.16.0
+sentence-transformers>=2.3.0
+
+# --- visualizaciones interactivas ---
 plotly==5.18.0
+
+# --- utilidades del sistema ---
+numpy==1.26.2
 pandas==2.2.0
+

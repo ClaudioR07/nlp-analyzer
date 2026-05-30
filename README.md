@@ -7,10 +7,10 @@ Instrucciones para configurar el entorno virtual e instalar las dependencias (`p
 
 ## Ejecución del Script (CLI)
 Para ejecutar el orquestador, utiliza el siguiente formato:
-`python main.py --csv data/archivo.csv --columna texto --idioma es --titulo "Reporte" --paleta viridis`
+`python main.py --csv data/archivo.csv --columna texto --idioma es --titulo "Reporte" --paleta viridis -e latin-1`
 
 ## Arquitectura y Roles
 * **Integrante 1:** CLI y Preprocesamiento Léxico.
 * **Integrante 2:** Outliers y Sentimientos (pysentimiento).
 * **Integrante 3:** Tópicos (BERTopic) y Similitud "Precio".
-* **Integrante 4 (Claudio):** Integración, Orquestación y Visualización Interactiva Plotly.
+* **Integrante 4:** Integración, Orquestación y Visualización Interactiva Plotly.
