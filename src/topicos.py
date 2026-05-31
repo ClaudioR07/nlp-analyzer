@@ -7,14 +7,13 @@ from sentence_transformers import SentenceTransformer
 from collections import Counter
 import warnings
 
-# Ignorar warnings de librerías para no ensuciar la terminal del CLI
+
 warnings.filterwarnings("ignore")
 
 class AnalizadorSemantico:
     def __init__(self, idioma='es', umbral_minimo=30):
         """
         Inicializa el analizador.
-        Carga un modelo multilingüe (soporta es, en, fr como pide el PDF) 
         """
         self.idioma = idioma
         self.umbral_minimo = umbral_minimo
@@ -22,13 +21,17 @@ class AnalizadorSemantico:
         print("Cargando modelo de embeddings multilingüe (esto puede tardar la primera vez)...")
         self.embedding_model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
         
-        # Tópicos ancla definidos para las playas (Guided Topic Modeling)
         # Nota: Si se evalúan otros idiomas, estas palabras guían al modelo pero
         # los embeddings multilingües ayudarán a asociarlas a sus traducciones implícitas.
         self.seeded_topics = [
-            ["infraestructura", "instalaciones", "baños", "palapas", "estacionamiento", "accesibilidad"],
-            ["naturaleza", "arena", "mar", "agua", "limpieza", "olas", "paisaje", "clima"],
-            ["servicio", "atención", "meseros", "comida", "restaurante", "amabilidad", "rápido"]
+            # Tópico 0: Entorno y la infraestructura (lugar físico)
+            ["infraestructura", "instalaciones", "baños", "mantenimiento", "estacionamiento", "ubicación", "limpieza", "seguridad"],
+            
+            # Tópico 1: Atractivos y experiencia (estético / actividades)
+            ["experiencia", "atractivo", "paisaje", "vista", "ambiente", "actividades", "diversión", "naturaleza", "clima"],
+            
+            # Tópico 2: Servicio y hospitalidad
+            ["servicio", "atención", "personal", "personal", "amabilidad", "comida", "bebida", "rapidez", "hospitalidad"]
         ]
 
     def procesar_particion(self, df_particion, col_limpia='texto_limpio', col_original='comentario'):
@@ -53,8 +56,8 @@ class AnalizadorSemantico:
         """
         Alternativa a BERTopic para grupos pequeños. Genera n-gramas o frecuencias.
         """
-        # Configuramos stopwords dependiendo del idioma
-        stop_words_lang = 'english' if self.idioma == 'en' else None # Sklearn no trae de 'es' por defecto, pero el texto ya viene limpio de spacy
+        # stopwords dependiendo del idioma
+        stop_words_lang = 'english' if self.idioma == 'en' else None # nota: Sklearn no trae de 'es' por defecto, pero el texto ya viene limpio de spacy
         
         vectorizer = CountVectorizer(stop_words=stop_words_lang)
         try:
@@ -78,21 +81,18 @@ class AnalizadorSemantico:
         Implementa BERTopic con Guided Topic Modeling (seeded_topics).
         Extrae palabras clave y los comentarios más representativos (Punto 5).
         """
-        # Calcular embeddings previamente para mayor control
+        # calcular embeddings previamente para mayor control
         embeddings = self.embedding_model.encode(textos_limpios, show_progress_bar=False)
         
-        # Configurar BERTopic con los tópicos ancla
-        topic_model = BERTopic(seed_topic_list=self.seeded_topics, language="multilingual")
-        
-        # Entrenar el modelo
+        # BERTopic con tópicos ancla
+        topic_model = BERTopic(seed_topic_list=self.seeded_topics, language="multilingual", nr_topics=15)
         topics, probs = topic_model.fit_transform(textos_limpios, embeddings)
         
-        # Obtener información de los tópicos
+        # información de los tópicos
         info_topicos = topic_model.get_topic_info()
         
-        # Obtener palabras representativas y el comentario original más cercano al centroide
+        # palabras representativas y el comentario original más cercano al centroide
         resultados_topicos = []
-        
         for topic_id in info_topicos['Topic']:
             if topic_id == -1:
                 continue # Ignorar el tópico -1 (outliers de BERTopic)
@@ -134,23 +134,44 @@ class AnalizadorSemantico:
         textos_limpios = df[col_limpia].tolist()
         textos_originales = df[col_original].tolist()
         
-        # Frase sintética adaptable al idioma
+        if len(textos_limpios) == 0:
+            return []
+            
+        # Definimos una lista de frases que ataquen el tema desde diferentes ángulos
         if self.idioma == 'en':
-            frase_sintetica = "The price is fair for the value and cost of the service"
+            frases_referencia = [
+                "The price is fair for the value and cost of the service",
+                "It is cheap, expensive, or a good value for money",
+                "Excellent quality for a reasonable price",
+                "They charged me too much money for what it is"
+            ]
         elif self.idioma == 'fr':
-            frase_sintetica = "Le prix est juste pour la valeur et le coût du service"
+            frases_referencia = [
+                "Le prix est juste pour la valeur et le coût du service",
+                "C'est cher, pas cher, ou un bon rapport qualité prix",
+                "Excellente qualité pour un prix raisonnable",
+                "Ils m'ont demandé trop d'argent pour ce que c'est"
+            ]
         else:
-            frase_sintetica = "El precio es justo por el valor y costo del servicio"
+            frases_referencia = [
+                "El precio es justo por el valor y costo del servicio",
+                "Es caro, barato, económico o una buena relación calidad precio",
+                "Excelente calidad por un costo razonable y accesible",
+                "Me cobraron mucho dinero por lo que ofrecen en el lugar"
+            ]
         
-        # Vectorizar la frase de referencia y todos los textos
-        vector_referencia = self.embedding_model.encode([frase_sintetica])
+        # PASO IMNPORTANTE: Vectorizar todas las frases de referencia
+        vectores_referencia = self.embedding_model.encode(frases_referencia, show_progress_bar=False)
+        
+        # promedio de los vectores (Centroide Semántico)
+        # colapsa la matriz de vectores en un único vector promedio ideal
+        vector_promedio = np.mean(vectores_referencia, axis=0).reshape(1, -1)
+        
+        # vectorizar los textos del corpus
         vectores_textos = self.embedding_model.encode(textos_limpios, show_progress_bar=False)
         
-        # Calcular similitud de coseno
-        similitudes = cosine_similarity(vector_referencia, vectores_textos)[0]
-        
-        # Obtener los índices de los 5 comentarios con mayor similitud
-        # Manejamos el caso donde haya menos de 5 comentarios en total
+        # similitud de coseno contra el vector promedio
+        similitudes = cosine_similarity(vector_promedio, vectores_textos)[0]
         n_top = min(5, len(textos_originales))
         top_indices = np.argsort(similitudes)[-n_top:][::-1]
         

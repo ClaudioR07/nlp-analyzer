@@ -46,8 +46,6 @@ def obtener_argumentos():
         choices=['viridis', 'cividis', 'plasma', 'inferno'],
         help="Paleta de colores accesible para daltonismo a utilizar en las gráficas.")
 
-    args = parser.parse_args()
-
     parser.add_argument(
         '-e', '--encoding',
         type=str,
