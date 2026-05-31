@@ -79,7 +79,7 @@ class AnalizadorSemantico:
     def _ejecutar_bertopic_guiado(self, textos_limpios: list, textos_originales: list):
         """
         Implementa BERTopic con Guided Topic Modeling (seeded_topics).
-        Extrae palabras clave y los comentarios más representativos (Punto 5).
+        Extrae palabras clave y los comentarios más representativos.
         """
         # calcular embeddings previamente para mayor control
         embeddings = self.embedding_model.encode(textos_limpios, show_progress_bar=False)
