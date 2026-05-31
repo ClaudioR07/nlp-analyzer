@@ -26,7 +26,7 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
     colores_secuenciales = escalas.get(paleta.lower(), px.colors.sequential.Viridis)
     
     # Paleta cualitativa semántica fija para los sentimientos
-    color_sentimientos = {'POS': '#10b981', 'NEG': '#ef4444', 'NEU': '#64748b'}
+    color_sentimientos = {'POS': '#10b981', 'NEG': '#ef4444', 'NEU': "#71849e"}
     simbolos = ['circle', 'square', 'diamond', 'cross', 'x', 'star']
 
     # --- B. GRÁFICA 1: PROPORCIÓN DE SENTIMIENTOS (Pie Chart) ---
@@ -68,17 +68,54 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
         # Gráfica informativa vacía en caso de que no existan suficientes outliers
         fig_outliers = px.bar(title="Sin Outliers detectados en la muestra", template=tema)
 
-    # --- E. GRÁFICA 4: ANÁLISIS ESPECÍFICO DE PRECIO (Scatter Plot Semántico) ---
+# --- E. GRÁFICA 4: ANÁLISIS ESPECÍFICO DE PRECIO (Scatter Plot Semántico) ---
+    # Convertimos los negativos a 0.1 solo para que Plotly pueda dibujar el tamaño del punto
+    df_limpio['Tamanio_Burbuja'] = df_limpio['Similitud_Precio'].clip(lower=0.1)
+
     fig_precio = px.scatter(
         df_limpio, 
         x='Similitud_Precio', 
         y='Polaridad_Clase', 
         color='Similitud_Precio', 
         color_continuous_scale=colores_secuenciales, 
-        size='Similitud_Precio', 
+        size='Tamanio_Burbuja', # <-- Usamos nuestra nueva columna strictly positiva
         hover_data=['Comentario_Original'],
         title="Similitud de los Comentarios frente al concepto 'Precio / Costo / Valor'", 
         template=tema
+    )
+
+    # =========================================================
+    # NUEVAS GRÁFICAS PARA ESCALAR EL DASHBOARD
+    # =========================================================
+
+    # --- F. GRÁFICA 5: SUNBURST (Jerarquía Semántica) ---
+    # Contamos cuántos comentarios hay por cada combinación de Sentimiento -> Tópico
+    df_sunburst = df_limpio.groupby(['Polaridad_Clase', 'Tópico']).size().reset_index(name='Cantidad')
+    fig_sunburst = px.sunburst(
+        df_sunburst, path=['Polaridad_Clase', 'Tópico'], values='Cantidad',
+        color='Polaridad_Clase', color_discrete_map=color_sentimientos,
+        title="Estructura Jerárquica: Sentimientos y sus Tópicos", template=tema
+    )
+
+    # --- G. GRÁFICA 6: TREEMAP (Nube de Palabras Interactiva) ---
+    # Juntamos todo el texto limpio, lo separamos en palabras y contamos las top 40
+    from collections import Counter
+    todas_las_palabras = " ".join(df_limpio['texto_limpio'].dropna()).split()
+    top_palabras = Counter(todas_las_palabras).most_common(40)
+    df_palabras = pd.DataFrame(top_palabras, columns=['Palabra', 'Frecuencia'])
+    
+    fig_treemap = px.treemap(
+        df_palabras, path=['Palabra'], values='Frecuencia',
+        color='Frecuencia', color_continuous_scale=colores_secuenciales,
+        title="Términos más recurrentes (Nube de Palabras Interactiva)", template=tema
+    )
+
+    # --- H. GRÁFICA 7: VIOLIN PLOT (Densidad del Precio) ---
+    fig_violin = px.violin(
+        df_limpio, x='Polaridad_Clase', y='Similitud_Precio', 
+        color='Polaridad_Clase', color_discrete_map=color_sentimientos,
+        box=True, points="all", hover_data=['Comentario_Original'],
+        title="Distribución de interés económico según el Sentimiento", template=tema
     )
 
     # --- F. EXTRACCIÓN HTML INDEPENDIENTE (100% Offline) ---
@@ -88,6 +125,9 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
     html_2 = fig_topicos.to_html(full_html=False, include_plotlyjs=False)
     html_3 = fig_outliers.to_html(full_html=False, include_plotlyjs=False)
     html_4 = fig_precio.to_html(full_html=False, include_plotlyjs=False)
+    html_5 = fig_sunburst.to_html(full_html=False, include_plotlyjs=False)
+    html_6 = fig_treemap.to_html(full_html=False, include_plotlyjs=False)
+    html_7 = fig_violin.to_html(full_html=False, include_plotlyjs=False)
 
     # --- G. DISEÑO DE LA PLANTILLA WEB DEL DASHBOARD ---
     bg_body = "#0f172a" if modo_oscuro else "#f8fafc"
@@ -138,6 +178,25 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
             <h2>4. Percepción del Concepto "Precio / Valor / Costo"</h2>
             <p class="info">Nivel de correlación semántica de los comentarios reales frente a la frase de referencia.</p>
             {html_4}
+        </div>
+        
+        <div class="grid-container">
+            <div class="card">
+                <h2>5. Jerarquía Semántica (Sunburst)</h2>
+                <p class="info">Haz clic en un sentimiento para expandir sus tópicos.</p>
+                {html_5}
+            </div>
+            <div class="card">
+                <h2>6. Términos Globales (Treemap)</h2>
+                <p class="info">Mapa interactivo de las palabras más mencionadas.</p>
+                {html_6}
+            </div>
+        </div>
+
+        <div class="card-full">
+            <h2>7. Distribución Económica (Violin Plot)</h2>
+            <p class="info">Concentración de comentarios referentes al costo, segmentados por sentimiento.</p>
+            {html_7}
         </div>
     </body>
     </html>

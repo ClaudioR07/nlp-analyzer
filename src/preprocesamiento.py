@@ -51,7 +51,7 @@ def detectar_outliers(textos_limpios: list, contaminacion: float = 0.05):
     textos_validos = [t if t.strip() != "" else "vacio" for t in textos_limpios]
 
     vectorizer = TfidfVectorizer(max_features=500)
-    X = vectorizer.fit_transform(textos_validos)
+    X = vectorizer.fit_transform(textos_validos).toarray()
 
     modelo = IsolationForest(contamination=contaminacion, random_state=42)
     etiquetas = modelo.fit_predict(X)  # -1 = outlier, 1 = normal

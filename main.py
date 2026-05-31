@@ -80,13 +80,13 @@ def main():
         print("\n--> Tópicos Detectados en Comentarios POSITIVOS:")
         for t in res_pos['resumen']:
             print(f"  * Tópico {t['id_topico']} | Palabras Clave: {t['palabras_clave']}")
-            print(f"    Comentario representativo: \"{t['comentario_representative']}\"")
+            print(f"    Comentario representativo: \"{t['comentario_representativo']}\"")
             
     if res_neg['metodo'] == 'bertopic':
         print("\n--> Tópicos Detectados en Comentarios NEGATIVOS:")
         for t in res_neg['resumen']:
             print(f"  * Tópico {t['id_topico']} | Palabras Clave: {t['palabras_clave']}")
-            print(f"    Comentario representativo: \"{t['comentario_representative']}\"")
+            print(f"    Comentario representativo: \"{t['comentario_representativo']}\"")
 
     if res_pos['metodo'] == 'frecuencia':
         print(f"\n--> Partición positiva pequeña. Top palabras frecuentes: {res_pos['datos']}")
@@ -122,14 +122,16 @@ def main():
     from sklearn.metrics.pairwise import cosine_similarity as cos_sim
     df_limpio['Similitud_Precio'] = cos_sim(vector_ref, vectores_corp)[0]
     df_limpio['Comentario_Original'] = df_limpio[args.columna]
-
+    
+    
     # 5. Generación de Visualizaciones Interactivas (Módulo Integrante 4 - ¡Exacto a su código!)
     print("\n[5/5] Renderizando reportes visuales en HTML con Plotly...")
     generar_graficas(
-        datos=df_limpio, 
+        df_limpio=df_limpio, 
         paleta=args.paleta, 
         titulo=args.titulo, 
-        modo_oscuro=True
+        ngramas_outliers=ngramas, # ¡Conectamos los datos para tu gráfica de barras!
+        modo_oscuro=True #Aqui voy a probar cambiar falso o true
     )
     print("\n=== ¡EJECUCIÓN DEL PIPELINE COMPLETADA! ===")
 
