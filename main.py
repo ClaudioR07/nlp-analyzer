@@ -7,7 +7,6 @@ from src.topicos import AnalizadorSemantico
 from src.visualizaciones import generar_graficas
 
 def main():
-    # validación del CLI (Tu Módulo)
     args = obtener_argumentos()
     
     print(f"\n[1/5] Leyendo el archivo de datos: {args.input}...")
@@ -17,21 +16,21 @@ def main():
         print(f"Error crítico al abrir el archivo CSV: {e}")
         return
 
-    # preprocesamiento de texto (Tu Módulo)
+    # preprocesamiento texto
     print("\n[2/5] Cargando pipeline de spaCy y limpiando texto...")
     nlp = cargar_modelo_spacy(args.idioma)
     df_limpio = preprocesar_dataframe(df, args.columna, nlp)
 
-    # ── INTEGRANTE 2: Detección de outliers ──────────────────────────────────
+
     print("\n[2.5/5] Detectando y analizando comentarios atípicos (outliers)...")
     textos_limpios = df_limpio['texto_limpio'].tolist()
     indices_outliers, indices_normales = detectar_outliers(textos_limpios, contaminacion=0.05)
 
-    # Marcar en el DataFrame qué filas son outliers (útil para el Integrante 4)
+
     df_limpio['es_outlier'] = False
     df_limpio.loc[indices_outliers, 'es_outlier'] = True
 
-    # Analizar n-gramas solo de los outliers
+    # n-gramas solo de los outliers
     textos_outliers = df_limpio.loc[indices_outliers, 'texto_limpio'].tolist()
     if textos_outliers:
         ngramas = analizar_outliers_ngramas(textos_outliers)
@@ -43,33 +42,32 @@ def main():
         print("  No se detectaron outliers en el dataset.")
         ngramas = {"unigramas": [], "bigramas": [], "trigramas": []}
 
-    # Solo los comentarios normales continúan al análisis de sentimientos
+    # Solo comentarios normales continúan al análisis de sentimientos
     df_normales = df_limpio.loc[indices_normales].copy()
     print(f"  Comentarios que continúan al análisis: {len(df_normales)}")
-    # ── FIN INTEGRANTE 2: Outliers ────────────────────────────────────────────
 
-    # 3. Clasificación de Sentimientos (Módulo Integrante 2 - Adaptado a TextBlob/Pysentimiento)
+
+    # xlasificación de sentimientos TextBlob/Pysentimiento
     print("\n[3/5] Ejecutando análisis de sentimientos en lote...")
     lector_sentimientos = AnalizadorSentimientosPipeline(args.idioma)
 
-    # ── INTEGRANTE 2: sentimientos solo sobre normales ────────────────────────
+    # sentimientos solo sobre normales 
     df_normales['Polaridad_Clase'] = df_normales[args.columna].apply(
         lambda x: lector_sentimientos.analizar(x)
     )
-    # Propagar resultados al df_limpio completo (outliers quedan como 'NEU')
+    # propagar resultados al df_limpio completo (outliers quedan como 'NEU')
     df_limpio['Polaridad_Clase'] = 'NEU'
     df_limpio.loc[df_normales.index, 'Polaridad_Clase'] = df_normales['Polaridad_Clase']
-    # ── FIN INTEGRANTE 2: sentimientos ───────────────────────────────────────
 
-    # Mapeo numérico para las gráficas del Integrante 4
+    # mapeo numérico para gráficas
     mapeo_numerico = {'POS': 1.0, 'NEU': 0.0, 'NEG': -1.0}
     df_limpio['Polaridad_Sentimiento'] = df_limpio['Polaridad_Clase'].map(mapeo_numerico)
 
-    # Separar las particiones solicitadas en la rúbrica
+    # particiones solicitadas en la rúbrica
     df_positivos = df_limpio[df_limpio['Polaridad_Clase'] == 'POS'].copy()
     df_negativos = df_limpio[df_limpio['Polaridad_Clase'] == 'NEG'].copy()
 
-    # 4. Modelado de Tópicos e Inteligencia Semántica (Módulo Integrante 3 - ¡Exacto a su código!)
+    # modelado de tópicos e inteligencia semántica
     print("\n[4/5] Iniciando modelado de tópicos semánticos por particiones...")
     analizador_semantico = AnalizadorSemantico(idioma=args.idioma, umbral_minimo=30)
     
@@ -102,7 +100,7 @@ def main():
         print(f"Similitud {item['similitud']:.4f}: {item['comentario_original']}")
     print("=========================================\n")
 
-    # --- PREPARACIÓN DE DATOS PARA LAS GRÁFICAS DEL INTEGRANTE 4 ---
+    # pREPARACIÓN DE DATOS PARA LAS GRÁFICAS
     df_limpio['Tópico'] = 'Outlier / Otros'
     
     if res_pos['metodo'] == 'bertopic' and not df_positivos.empty:
@@ -124,16 +122,16 @@ def main():
     df_limpio['Comentario_Original'] = df_limpio[args.columna]
     
     
-    # 5. Generación de Visualizaciones Interactivas (Módulo Integrante 4 - ¡Exacto a su código!)
+    # generación de Visualizaciones interacticvas
     print("\n[5/5] Renderizando reportes visuales en HTML con Plotly...")
     generar_graficas(
         df_limpio=df_limpio, 
         paleta=args.paleta, 
         titulo=args.titulo, 
-        ngramas_outliers=ngramas, # ¡Conectamos los datos para tu gráfica de barras!
+        ngramas_outliers=ngramas,
         modo_oscuro=True #Aqui voy a probar cambiar falso o true
-    )
-    print("\n=== ¡EJECUCIÓN DEL PIPELINE COMPLETADA! ===")
+        )
+    print("\nPIPELINE COMPLETADO!")
 
 if __name__ == '__main__':
     main()
