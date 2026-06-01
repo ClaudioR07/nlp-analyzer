@@ -23,13 +23,30 @@ def cargar_modelo_spacy(idioma):
 def limpiar_comentario(texto, nlp):
     if not isinstance(texto, str) or texto.strip() == "":
         return ""
+
     texto = texto.lower()
+
+    texto = re.sub(r'[áàäâ]', 'a', texto)
+    texto = re.sub(r'[éèëê]', 'e', texto)
+    texto = re.sub(r'[íìïî]', 'i', texto)
+    texto = re.sub(r'[óòöô]', 'o', texto)
+    texto = re.sub(r'[úùüû]', 'u', texto)
+
     texto = re.sub(r'https?://\S+|www\.\S+', '', texto)
+
     doc = nlp(texto)
+
     tokens_limpios = [
-        token.lemma_ for token in doc
-        if not token.is_stop and token.is_alpha and not token.is_space
-    ]
+    token.text
+    for token in doc
+    if (
+        not token.is_stop
+        and token.is_alpha
+        and not token.is_space
+        and len(token.text) > 2
+    )
+]
+
     return " ".join(tokens_limpios)
 
 def preprocesar_dataframe(df, columna_texto, nlp):
@@ -102,3 +119,4 @@ def analizar_outliers_ngramas(textos_outliers: list, top_k: int = 15) -> dict:
     }
 
     return resultado
+
