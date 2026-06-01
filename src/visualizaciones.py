@@ -117,6 +117,8 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
         box=True, points="all", hover_data=['Comentario_Original'],
         title="Distribución de interés económico según el Sentimiento", template=tema
     )
+    
+    
 
     # --- F. EXTRACCIÓN HTML INDEPENDIENTE (100% Offline) ---
     # include_plotlyjs=True incrusta el motor JS directamente en el archivo 
@@ -133,6 +135,35 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
     bg_body = "#0f172a" if modo_oscuro else "#f8fafc"
     bg_card = "#1e293b" if modo_oscuro else "#ffffff"
     txt_color = "#f8fafc" if modo_oscuro else "#0f172a"
+    
+    # =========================================================
+    # EXTRACCIÓN DE TEXTOS CUALITATIVOS (Voces del Cliente)
+    # =========================================================
+    
+    # 1. Top 5 Comentarios sobre Precio
+    top_5_precio = df_limpio.nlargest(5, 'Similitud_Precio')
+    html_top_precio = "<ul style='text-align: left; margin: 0; padding-left: 20px;'>"
+    for _, row in top_5_precio.iterrows():
+        html_top_precio += f"<li style='margin-bottom: 12px; color: #333;'><b>Similitud {row['Similitud_Precio']:.4f}:</b> <br><i>\"{row['Comentario_Original']}\"</i></li>"
+    html_top_precio += "</ul>"
+
+    # 2. Resumen de Tópicos (1 Comentario Representativo por Tópico)
+    # Agrupamos para sacar un ejemplo de cada tópico detectado
+    html_topicos = "<div style='text-align: left; color: #333;'>"
+    
+    html_topicos += "<h4 style='color: #2ca02c; margin-top: 0;'>Tópicos POSITIVOS</h4><ul style='padding-left: 20px;'>"
+    pos_df = df_limpio[df_limpio['Polaridad_Clase'] == 'POS'].drop_duplicates(subset=['Tópico'])
+    for _, row in pos_df.iterrows():
+        if row['Tópico'] != -1:  # Evitamos el tópico -1 (Ruido)
+            html_topicos += f"<li style='margin-bottom: 10px;'><b>Tópico {row['Tópico']}:</b> <i>\"{row['Comentario_Original']}\"</i></li>"
+    html_topicos += "</ul>"
+
+    html_topicos += "<h4 style='color: #d62728;'>Tópicos NEGATIVOS</h4><ul style='padding-left: 20px;'>"
+    neg_df = df_limpio[df_limpio['Polaridad_Clase'] == 'NEG'].drop_duplicates(subset=['Tópico'])
+    for _, row in neg_df.iterrows():
+        if row['Tópico'] != -1:
+            html_topicos += f"<li style='margin-bottom: 10px;'><b>Tópico {row['Tópico']}:</b> <i>\"{row['Comentario_Original']}\"</i></li>"
+    html_topicos += "</ul></div>"
 
     plantilla_html = f"""
     <!DOCTYPE html>
@@ -165,6 +196,27 @@ def generar_graficas(df_limpio, paleta, titulo, ngramas_outliers=None, modo_oscu
                 <h2>2. Análisis de Comentarios Atípicos (Outliers)</h2>
                 <p class="info">Frecuencia de frases más repetidas exclusivamente en los textos catalogados como aislados.</p>
                 {html_3}
+            </div>
+        </div>
+        
+        <!-- SECCIÓN DE TEXTOS CUALITATIVOS -->
+        <div class="grid-container">
+            <div class="card">
+                <h2>📝 Voces del Turista (Comentarios Representativos)</h2>
+                <p class="info">Ejemplos reales extraídos automáticamente de cada tópico semántico detectado.</p>
+                <!-- Caja con scroll para no hacer la página kilométrica -->
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; height: 350px; overflow-y: auto; border: 1px solid #ddd;">
+                    {html_topicos}
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>💰 Top 5: Menciones de Precio y Valor</h2>
+                <p class="info">Las opiniones con mayor similitud matemática al concepto de costo y economía.</p>
+                <!-- Caja con scroll para los precios -->
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; height: 350px; overflow-y: auto; border: 1px solid #ddd;">
+                    {html_top_precio}
+                </div>
             </div>
         </div>
 
